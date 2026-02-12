@@ -1,0 +1,2729 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tactics Admin Panel</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --primary-dark: #4f46e5;
+            --secondary: #64748b;
+            --background: #0f172a;
+            --surface: #1e293b;
+            --surface-light: #334155;
+            --surface-lighter: #475569;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --success: #22c55e;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --info: #0ea5e9;
+            --sidebar-width: 260px;
+            --header-height: 70px;
+            --glass: rgba(30, 41, 59, 0.7);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--background);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        /* Layout Structure */
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .sidebar-nav {
+            padding: 20px 12px;
+            flex: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 10px;
+            margin-bottom: 4px;
+            transition: all 0.2s;
+            cursor: pointer;
+            font-weight: 500;
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: left;
+        }
+
+        .nav-item:hover {
+            background: var(--surface-light);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 24px;
+            max-width: calc(100vw - var(--sidebar-width));
+        }
+
+        .top-bar {
+            height: var(--header-height);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            padding: 0 8px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .server-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #94a3b8;
+        }
+
+        .status-dot.online {
+            background: #10b981;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+        }
+
+        .status-dot.offline {
+            background: #ef4444;
+        }
+
+        .user-email {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            background: var(--surface);
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+        }
+
+        /* Dashboard Components */
+        .page {
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-header {
+            margin-bottom: 24px;
+        }
+
+        .section-header h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .section-header p {
+            color: var(--text-secondary);
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin-bottom: 24px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        /* Forms */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            color: white;
+        }
+
+        .btn-primary { background: var(--primary); }
+        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+
+        .btn-secondary { background: var(--surface-light); color: var(--text-primary); }
+        .btn-secondary:hover { background: var(--surface-lighter); }
+
+        .btn-danger { background: var(--error); }
+        .btn-danger:hover { background: #dc2626; }
+
+        .btn-api { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .btn-api:hover { transform: translateY(-1px); opacity: 0.9; }
+
+        .btn-sm { padding: 6px 12px; font-size: 0.85rem; border-radius: 8px; }
+
+        /* Competition/Match Cards */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .comp-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .comp-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+            box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.4);
+        }
+
+        .comp-card-badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            padding: 4px 12px;
+            background: var(--primary);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border-bottom-left-radius: 12px;
+        }
+
+        .comp-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 16px;
+            padding-right: 40px;
+        }
+
+        .comp-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            background: var(--background);
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        /* Match Items */
+        .match-card {
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .match-teams {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .team {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            text-align: center;
+        }
+
+        .team-logo-small {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+            background: white;
+            padding: 4px;
+            border-radius: 50%;
+        }
+
+        .team-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .match-score {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary-light);
+            letter-spacing: 2px;
+        }
+
+        /* API Matches Panel */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            z-index: 2000;
+        }
+
+        .modal-overlay.show { display: flex; }
+
+        .modal-content {
+            background: var(--surface);
+            width: 100%;
+            max-width: 800px;
+            max-height: 85vh;
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        /* API Match Items */
+        .api-match-item {
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .api-match-item:hover {
+            border-color: var(--primary);
+            background: var(--surface-light);
+        }
+
+        .api-match-teams {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .api-match-info {
+            display: flex;
+            gap: 16px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        .api-match-tournament {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--primary-light);
+        }
+
+        .day-btn {
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .day-btn:hover {
+            background: var(--surface-lighter);
+            color: var(--text-primary);
+        }
+
+        .day-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Notifications */
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 20px;
+            background: var(--surface);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .leaderboard-table th {
+            background: var(--surface-light);
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .leaderboard-table td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+
+        .leaderboard-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .leaderboard-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .rank-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .rank-1 { background: #fbbf24; color: #78350f; }
+        .rank-2 { background: #94a3b8; color: #1e293b; }
+        .rank-3 { background: #b45309; color: #fef3c7; }
+        .rank-other { background: var(--surface-light); color: var(--text-secondary); }
+
+        /* Payment Cards */
+        .payment-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .payment-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 16px 0;
+            padding: 16px;
+            background: var(--background);
+            border-radius: 12px;
+        }
+
+        .payment-meta span {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .payment-meta strong {
+            color: var(--text-primary);
+            display: block;
+            margin-bottom: 2px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .payment-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Notifications */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 16px 24px;
+            border-radius: 12px;
+            background: var(--surface);
+            color: white;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            display: none;
+            z-index: 3000;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .toast.show {
+            display: block;
+        }
+
+        .toast.success {
+            background: var(--success);
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+
+        .toast.error {
+            background: var(--danger);
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .toast.info {
+            background: var(--primary);
+            border-color: rgba(99, 102, 241, 0.2);
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--error); }
+
+        /* Login Page */
+        .login-container {
+            max-width: 400px;
+            margin: 10vh auto;
+            padding: 40px;
+            background: var(--surface);
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .login-header h1 {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--surface-light); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--secondary); }
+    </style>
+</head>
+
+<body>
+    <!-- Login View -->
+    <div id="loginView" style="display:none;">
+        <div class="login-container">
+            <div class="login-header">
+                <h1>⚽ Tactics</h1>
+                <p style="color: var(--text-secondary)">Admin Control Center</p>
+            </div>
+            <div id="loginError" class="error" style="margin-bottom: 20px; color: var(--error); font-size: 0.9rem; display: none;"></div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="loginEmail" required placeholder="admin@tactics.com">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" required placeholder="••••••••">
+                </div>
+                <button type="submit" id="loginBtn" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                    Sign In to Dashboard
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard View -->
+    <div id="adminView" class="layout" style="display:none;">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">⚽ Tactics</div>
+            </div>
+            <nav class="sidebar-nav">
+                <button id="navCompetitions" class="nav-item active" onclick="showPage1()">
+                    <span>🏆</span> Competitions
+                </button>
+                <button id="navPayments" class="nav-item" onclick="showPayments()">
+                    <span>💰</span> Payments
+                </button>
+                <button id="navLeaderboard" class="nav-item" onclick="showLeaderboard()">
+                    <span>📊</span> Leaderboard
+                </button>
+                <button id="navSettings" class="nav-item" onclick="showSettings()">
+                    <span>⚙️</span> Settings
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <button id="logoutBtn" class="nav-item" style="color: var(--error)">
+                    <span>🚪</span> Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <div id="pageTitle">
+                    <h2 style="font-size: 1.5rem; font-weight: 700;">Dashboard</h2>
+                </div>
+                <div class="user-info">
+                    <div class="server-status" title="Notification Server Status">
+                        <div id="statusDot" class="status-dot"></div>
+                        <span id="statusText">Server Offline</span>
+                    </div>
+                    <span id="adminUserEmail" class="user-email">admin@example.com</span>
+                </div>
+            </header>
+
+            <!-- Page 1: Competitions -->
+            <div id="page1" class="page active">
+                <div class="section-header">
+                    <h2>Competitions</h2>
+                    <p>Create and manage prediction tournaments</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Create New Competition</h3>
+                    </div>
+                    <form id="competitionForm" class="form-grid">
+                        <div class="form-group full-width">
+                            <label>Competition Name</label>
+                            <input type="text" id="competitionName" required placeholder="e.g., Champions League Week 5">
+                        </div>
+                        <div class="form-group">
+                            <label>Token Prize Pool</label>
+                            <input type="number" id="tokenPrize" required min="1" placeholder="1000">
+                        </div>
+                        <div class="form-group">
+                            <label>Entry Fee (Tokens)</label>
+                            <input type="number" id="entryFee" required min="0" value="2">
+                        </div>
+                        <div class="form-group">
+                            <label>Close Date</label>
+                            <input type="date" id="competitionCloseDate" required>
+                        </div>
+                        <div class="form-group" style="display: flex; align-items: flex-end;">
+                            <button type="submit" id="createBtn" class="btn btn-primary" style="width: 100%;">Create Tournament</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="error1" class="toast error"></div>
+                <div id="success1" class="toast success"></div>
+
+                <div class="section-header" style="margin-top: 40px;">
+                    <h3>Existing Tournaments</h3>
+                </div>
+                <div id="competitionsList" class="grid">
+                    <!-- Competition cards will be injected here -->
+                </div>
+            </div>
+
+            <!-- Page 2: Manage Matches -->
+            <div id="page2" class="page">
+                <div class="section-header">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <button class="btn btn-secondary btn-sm" onclick="showPage1()">← Back</button>
+                        <div>
+                            <h2 id="competitionTitle">Manage Matches</h2>
+                            <p id="competitionPrize"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title" id="formTitle">Add Match</h3>
+                        <button class="btn btn-api btn-sm" onclick="showApiMatches()">🌐 Fetch from API</button>
+                    </div>
+                    
+                    <form id="matchForm">
+                        <input type="hidden" id="matchId" value="">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Team 1 Name</label>
+                                <input type="text" id="team1" required placeholder="Arsenal">
+                            </div>
+                            <div class="form-group">
+                                <label>Team 1 Logo URL</label>
+                                <input type="url" id="team1Logo" placeholder="https://...">
+                            </div>
+                            <div class="form-group">
+                                <label>Team 2 Name</label>
+                                <input type="text" id="team2" required placeholder="Chelsea">
+                            </div>
+                            <div class="form-group">
+                                <label>Team 2 Logo URL</label>
+                                <input type="url" id="team2Logo" placeholder="https://...">
+                            </div>
+                            <div class="form-group">
+                                <label>Match Date</label>
+                                <input type="date" id="matchDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Match Time</label>
+                                <input type="time" id="matchTime" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select id="matchStatus">
+                                    <option value="upcoming">Upcoming</option>
+                                    <option value="live">Live</option>
+                                    <option value="finished">Finished</option>
+                                    <option value="completed">Completed</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Scores (Home - Away)</label>
+                                <div style="display: flex; gap: 8px;">
+                                    <input type="number" id="team1Score" min="0" placeholder="0">
+                                    <input type="number" id="team2Score" min="0" placeholder="0">
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 12px; margin-top: 10px;">
+                            <button type="submit" id="addMatchBtn" class="btn btn-primary">Save Match</button>
+                            <button type="button" class="btn btn-secondary" id="cancelEditBtn" onclick="cancelEdit()" style="display: none;">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="error2" class="toast error"></div>
+                <div id="success2" class="toast success"></div>
+
+                <div class="section-header">
+                    <h3>Matches in Tournament (<span id="matchCount">0</span>)</h3>
+                </div>
+                <div id="matchesList" class="grid">
+                    <!-- Match cards will be injected here -->
+                </div>
+            </div>
+
+            <!-- Page 3: Payments -->
+            <div id="paymentsPage" class="page">
+                <div class="section-header">
+                    <h2>Token Payments</h2>
+                    <p>Review and approve user top-ups</p>
+                </div>
+                <div id="paymentsList" class="grid">
+                    <!-- Payment cards will be injected here -->
+                </div>
+            </div>
+
+            <!-- Page 4: Leaderboard -->
+            <div id="leaderboardPage" class="page">
+                <div class="section-header">
+                    <h2>Leaderboard</h2>
+                    <p>User performance rankings</p>
+                </div>
+                <div class="card" style="margin-bottom: 32px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Filter by Competition</label>
+                        <select id="leaderboardCompetition" onchange="loadLeaderboard()" style="max-width: 400px;">
+                            <option value="">All Competitions</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="leaderboardList">
+                    <!-- Leaderboard table will be injected here -->
+                </div>
+            </div>
+
+            <!-- Page 5: Settings -->
+            <div id="settingsPage" class="page">
+                <div class="section-header">
+                    <h2>Settings</h2>
+                    <p>Configure your admin panel and API</p>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">API Configuration</h3>
+                    </div>
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label>Notification Server URL (Live or Local)</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="apiUrlInput" placeholder="https://your-server.onrender.com" style="flex: 1;">
+                            <button class="btn btn-primary" onclick="updateApiUrlFromInput()">Save URL</button>
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 8px;">
+                            Current URL: <code id="currentApiUrlDisplay">...</code>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="apiMatchesPanel" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Select Match from API</h3>
+                <button class="btn btn-secondary btn-sm" onclick="closeApiMatchesPanel()">Close</button>
+            </div>
+            <div class="modal-body">
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;">
+                    <button class="day-btn active" onclick="selectDay(0)">Today</button>
+                    <button class="day-btn" onclick="selectDay(1)">Tomorrow</button>
+                    <button class="day-btn" onclick="selectDay(2)">Day After</button>
+                    <input type="text" id="apiMatchesSearch" placeholder="🔍 Search team or league..." onkeyup="filterApiMatches()" style="flex: 1; min-width: 200px; margin-bottom: 0;">
+                </div>
+                <div id="apiMatchesList">
+                    <!-- API matches will be injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="predictionsPanel" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="predictionsTitle">User Predictions</h3>
+                <button class="btn btn-secondary btn-sm" onclick="closePredictionsPanel()">Close</button>
+            </div>
+            <div id="predictionsBody" class="modal-body">
+                <!-- Predictions will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = 'https://ufojgnpdwwycngjuzrlc.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmb2pnbnBkd3d5Y25nanV6cmxjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3NDM0NzcsImV4cCI6MjA3ODMxOTQ3N30.0dqGvm_Dm-gf39QsmDKXpx4bBNCzEtPT1mTyuDIjbVI';
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // API Configuration
+        // Use localStorage to save the API URL so it persists between sessions
+        let API_BASE_URL = localStorage.getItem('API_BASE_URL') || 'http://localhost:3001';
+        
+        // Helper to check if we're running locally or live
+        function updateApiUrl(newUrl) {
+            if (!newUrl) return;
+            // Ensure URL doesn't end with slash
+            const formattedUrl = newUrl.endsWith('/') ? newUrl.slice(0, -1) : newUrl;
+            API_BASE_URL = formattedUrl;
+            localStorage.setItem('API_BASE_URL', formattedUrl);
+            console.log('🌐 API URL updated to:', formattedUrl);
+            checkServerStatus();
+        }
+
+        let currentCompetitionId = null;
+        let currentCompetitionTitle = '';
+        let currentCompetitionPrize = 0;
+        let editingMatchId = null;
+        let currentUser = null;
+        let isAdminViewVisible = false;
+
+        document.addEventListener('DOMContentLoaded', initApp);
+
+        async function initApp() {
+            bindAuthHandlers();
+
+            const { data } = await supabaseClient.auth.getSession();
+            if (data.session?.user) {
+                currentUser = data.session.user;
+                showAdminView();
+            } else {
+                showLoginView();
+            }
+
+            supabaseClient.auth.onAuthStateChange((_event, session) => {
+                currentUser = session?.user ?? null;
+                if (currentUser) {
+                    // Only reset to page1 if we're not already viewing admin panel
+                    if (!isAdminViewVisible) {
+                        showAdminView();
+                    } else {
+                        // Just update user info without changing page
+                        const userEmailEl = document.getElementById('adminUserEmail');
+                        if (userEmailEl && currentUser) {
+                            userEmailEl.textContent = currentUser.email ?? '';
+                        }
+                    }
+                } else {
+                    isAdminViewVisible = false;
+                    showLoginView();
+                }
+            });
+        }
+
+        function bindAuthHandlers() {
+            const loginForm = document.getElementById('loginForm');
+            const loginBtn = document.getElementById('loginBtn');
+            const loginError = document.getElementById('loginError');
+            const logoutBtn = document.getElementById('logoutBtn');
+
+            if (loginForm) {
+                loginForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    loginError.classList.remove('show');
+
+                    loginBtn.disabled = true;
+                    loginBtn.textContent = 'Signing in...';
+
+                    const email = document.getElementById('loginEmail').value.trim();
+                    const password = document.getElementById('loginPassword').value;
+
+                    const { error } = await supabaseClient.auth.signInWithPassword({
+                        email,
+                        password,
+                    });
+
+                    if (error) {
+                        loginError.textContent = `❌ ${error.message}`;
+                        loginError.classList.add('show');
+                        loginBtn.disabled = false;
+                        loginBtn.textContent = 'Sign In';
+                    } else {
+                        loginBtn.textContent = 'Success!';
+                    }
+                });
+            }
+
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async () => {
+                    await supabaseClient.auth.signOut();
+                });
+            }
+        }
+
+        function showLoginView() {
+            isAdminViewVisible = false;
+            document.getElementById('loginView').style.display = 'block';
+            document.getElementById('adminView').style.display = 'none';
+            const loginBtn = document.getElementById('loginBtn');
+            if (loginBtn) {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Sign In';
+            }
+        }
+
+        // Show Admin View
+        async function showAdminView() {
+            isAdminViewVisible = true;
+            const userEmailEl = document.getElementById('adminUserEmail');
+            if (userEmailEl && currentUser) {
+                userEmailEl.textContent = currentUser.email ?? '';
+            }
+            document.getElementById('loginView').style.display = 'none';
+            document.getElementById('adminView').style.display = 'block';
+
+            // Check if the local API server is running
+            checkServerStatus();
+            // Periodically check server status every 10 seconds
+            setInterval(checkServerStatus, 10000);
+
+            // Only reset to page1 if no page is currently active
+            const hasActivePage = ['page1', 'page2', 'paymentsPage', 'leaderboardPage', 'settingsPage'].some(id => {
+                const element = document.getElementById(id);
+                return element && element.classList.contains('active');
+            });
+            if (!hasActivePage) {
+                setActiveNav('navCompetitions');
+                setActiveSection('page1');
+                await loadCompetitions();
+            }
+        }
+
+        function setActiveSection(sectionId) {
+            ['page1', 'page2', 'paymentsPage', 'leaderboardPage', 'settingsPage'].forEach(id => {
+                const element = document.getElementById(id);
+                if (!element) return;
+                if (id === sectionId) {
+                    element.classList.add('active');
+                } else {
+                    element.classList.remove('active');
+                }
+            });
+        }
+
+        function setActiveNav(buttonId) {
+            ['navCompetitions', 'navPayments', 'navLeaderboard', 'navSettings'].forEach(id => {
+                const btn = document.getElementById(id);
+                if (!btn) return;
+                if (id === buttonId) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+
+        // Show Page 1
+        async function showPage1() {
+            setActiveNav('navCompetitions');
+            setActiveSection('page1');
+            currentCompetitionId = null;
+            // Always reload competitions when navigating to page1
+            console.log('🔄 Navigating to page1, loading competitions...');
+            await loadCompetitions();
+        }
+
+        // Show Page 2
+        function showPage2(competitionId, title, prizePool) {
+            setActiveNav('navCompetitions');
+            setActiveSection('page2');
+            currentCompetitionId = competitionId;
+            currentCompetitionTitle = title;
+            currentCompetitionPrize = prizePool;
+            document.getElementById('competitionTitle').textContent = `${title} - Matches`;
+            document.getElementById('competitionPrize').textContent = `Prize Pool: ${prizePool} tokens`;
+            loadMatches();
+        }
+
+        async function showPayments() {
+            setActiveNav('navPayments');
+            setActiveSection('paymentsPage');
+            await loadPayments();
+        }
+
+        async function showLeaderboard() {
+            setActiveNav('navLeaderboard');
+            setActiveSection('leaderboardPage');
+            await loadCompetitionsForLeaderboard();
+            await loadLeaderboard();
+        }
+
+        function showSettings() {
+            setActiveNav('navSettings');
+            setActiveSection('settingsPage');
+            document.getElementById('apiUrlInput').value = API_BASE_URL;
+            document.getElementById('currentApiUrlDisplay').textContent = API_BASE_URL;
+        }
+
+        function updateApiUrlFromInput() {
+            const newUrl = document.getElementById('apiUrlInput').value.trim();
+            if (newUrl) {
+                updateApiUrl(newUrl);
+                document.getElementById('currentApiUrlDisplay').textContent = API_BASE_URL;
+                alert('✅ API URL updated successfully!');
+            }
+        }
+
+        async function loadCompetitionsForLeaderboard() {
+            const select = document.getElementById('leaderboardCompetition');
+            if (!select) return;
+
+            const { data, error } = await supabaseClient
+                .from('competitions')
+                .select('id, title')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('Error loading competitions:', error);
+                return;
+            }
+
+            // Clear existing options except "All Competitions"
+            select.innerHTML = '<option value="">All Competitions</option>';
+
+            if (data && data.length > 0) {
+                data.forEach(comp => {
+                    const option = document.createElement('option');
+                    option.value = comp.id;
+                    option.textContent = comp.title;
+                    select.appendChild(option);
+                });
+            }
+        }
+
+        async function loadLeaderboard() {
+            const list = document.getElementById('leaderboardList');
+            if (!list) return;
+            list.innerHTML = '<div class="loading">Loading leaderboard...</div>';
+
+            const competitionId = document.getElementById('leaderboardCompetition')?.value || null;
+
+            try {
+                // Fetch all predictions with match results
+                // Note: result_outcome may not exist, so we'll calculate from scores
+                let query = supabaseClient
+                    .from('predictions')
+                    .select(`
+                        id,
+                        user_id,
+                        user_email,
+                        predicted_outcome,
+                        competition_id,
+                        match:match_id (
+                            id,
+                            team1,
+                            team2,
+                            status,
+                            team1_score,
+                            team2_score
+                        )
+                    `);
+
+                if (competitionId) {
+                    query = query.eq('competition_id', competitionId);
+                }
+
+                const { data: predictions, error } = await query;
+
+                if (error) {
+                    list.innerHTML = `<div class="error show">❌ Error: ${error.message}</div>`;
+                    return;
+                }
+
+                if (!predictions || predictions.length === 0) {
+                    list.innerHTML = '<div class="loading">No predictions found.</div>';
+                    return;
+                }
+
+                // Calculate leaderboard
+                const userStats = {};
+
+                predictions.forEach(prediction => {
+                    const userId = prediction.user_id;
+                    const userEmail = prediction.user_email || 'Unknown';
+                    const match = prediction.match;
+
+                    if (!match) return;
+
+                    // Filter by competition if specified
+                    if (competitionId && prediction.competition_id !== competitionId) {
+                        return;
+                    }
+
+                    if (!userStats[userId]) {
+                        userStats[userId] = {
+                            user_id: userId,
+                            user_email: userEmail,
+                            total: 0,
+                            correct: 0
+                        };
+                    }
+
+                    const stats = userStats[userId];
+                    stats.total += 1;
+
+                    // Check if prediction was correct
+                    const matchStatus = (match.status || '').toLowerCase();
+                    if (matchStatus === 'completed' || matchStatus === 'finished') {
+                        const predictedOutcome = (prediction.predicted_outcome || '').toLowerCase();
+
+                        // Calculate actual outcome from scores
+                        const team1Score = match.team1_score;
+                        const team2Score = match.team2_score;
+
+                        // Only check correctness if we have scores
+                        if (team1Score != null && team2Score != null) {
+                            let actualOutcome;
+                            if (team1Score > team2Score) {
+                                actualOutcome = 'team1';
+                            } else if (team2Score > team1Score) {
+                                actualOutcome = 'team2';
+                            } else {
+                                actualOutcome = 'draw';
+                            }
+
+                            if (predictedOutcome === actualOutcome) {
+                                stats.correct += 1;
+                            }
+                        }
+                    }
+                });
+
+                // Convert to array and calculate win rates
+                const entries = Object.values(userStats).map(stats => {
+                    const winRate = stats.total > 0 ? (stats.correct / stats.total) * 100 : 0;
+                    return {
+                        ...stats,
+                        winRate: winRate
+                    };
+                });
+
+                // Sort by win rate (descending), then by total predictions
+                entries.sort((a, b) => {
+                    if (b.winRate !== a.winRate) {
+                        return b.winRate - a.winRate;
+                    }
+                    return b.total - a.total;
+                });
+
+                // Display leaderboard
+                if (entries.length === 0) {
+                    list.innerHTML = '<div class="loading">No completed predictions yet.</div>';
+                    return;
+                }
+
+                const table = document.createElement('table');
+                table.className = 'leaderboard-table';
+
+                // Header
+                const thead = document.createElement('thead');
+                thead.innerHTML = `
+                    <tr>
+                        <th>Rank</th>
+                        <th>User Email</th>
+                        <th style="text-align: center;">Correct</th>
+                        <th style="text-align: center;">Total</th>
+                        <th style="text-align: right;">Win Rate</th>
+                    </tr>
+                `;
+                table.appendChild(thead);
+
+                // Body
+                const tbody = document.createElement('tbody');
+                entries.forEach((entry, index) => {
+                    const rank = index + 1;
+                    const row = document.createElement('tr');
+                    
+                    let rankDisplay = `<span class="rank-badge rank-other">${rank}</span>`;
+                    if (rank === 1) rankDisplay = `<span class="rank-badge rank-1">1</span>`;
+                    if (rank === 2) rankDisplay = `<span class="rank-badge rank-2">2</span>`;
+                    if (rank === 3) rankDisplay = `<span class="rank-badge rank-3">3</span>`;
+
+                    row.innerHTML = `
+                        <td>${rankDisplay}</td>
+                        <td style="font-weight: 500;">${entry.user_email}</td>
+                        <td style="padding: 12px; text-align: center; color: var(--success); font-weight: bold;">${entry.correct}</td>
+                        <td style="padding: 12px; text-align: center;">${entry.total}</td>
+                        <td style="padding: 12px; text-align: right; font-weight: bold; color: var(--primary-light);">
+                            ${entry.winRate.toFixed(1)}%
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                table.appendChild(tbody);
+                list.innerHTML = '';
+                list.appendChild(table);
+
+            } catch (error) {
+                console.error('Error loading leaderboard:', error);
+                list.innerHTML = `<div class="error show">❌ Error: ${error.message || 'Failed to load leaderboard'}</div>`;
+            }
+        }
+
+        // Prize Distribution Functions - Accuracy-Based Proportional Distribution
+        const MIN_ACCURACY_THRESHOLD = 0.50; // Users with accuracy below 50% get no reward
+
+        async function checkAllMatchesFinished(competitionId) {
+            try {
+                const { data: matches, error } = await supabaseClient
+                    .from('matches')
+                    .select('id, status, team1_score, team2_score')
+                    .eq('competition_id', competitionId);
+
+                if (error) {
+                    console.error('Error checking matches:', error);
+                    return false;
+                }
+
+                if (!matches || matches.length === 0) return false;
+
+                for (const match of matches) {
+                    const status = (match.status || '').toLowerCase();
+                    if (status !== 'finished' && status !== 'completed') {
+                        return false;
+                    }
+                    if (match.team1_score == null || match.team2_score == null) {
+                        return false;
+                    }
+                }
+
+                return true;
+            } catch (e) {
+                console.error('Error checking matches:', e);
+                return false;
+            }
+        }
+
+        async function calculateTotalEntranceFees(competitionId) {
+            let totalFees = 0;
+
+            // Try competition_entry_fees table first
+            try {
+                const { data, error } = await supabaseClient
+                    .from('competition_entry_fees')
+                    .select('entry_fee')
+                    .eq('competition_id', competitionId);
+
+                if (!error && data) {
+                    for (const row of data) {
+                        totalFees += (row.entry_fee || 0);
+                    }
+                    return totalFees;
+                }
+            } catch (e) {
+                console.log('competition_entry_fees table not available, trying token_payments');
+            }
+
+            // Fallback to token_payments table
+            try {
+                const { data, error } = await supabaseClient
+                    .from('token_payments')
+                    .select('token_amount, payment_type')
+                    .eq('competition_id', competitionId)
+                    .eq('payment_type', 'entry_fee');
+
+                if (!error && data) {
+                    for (const row of data) {
+                        const amount = Math.abs(row.token_amount || 0);
+                        totalFees += amount;
+                    }
+                }
+            } catch (e) {
+                console.error('Error calculating entrance fees:', e);
+            }
+
+            return totalFees;
+        }
+
+        function calculateActualOutcome(team1Score, team2Score) {
+            if (team1Score == null || team2Score == null) return 'unknown';
+            if (team1Score > team2Score) return 'team1';
+            if (team2Score > team1Score) return 'team2';
+            return 'draw';
+        }
+
+        async function calculateUserCorrectPredictions(competitionId) {
+            try {
+                // First, get total number of finished matches in the competition
+                const { data: matches, error: matchesError } = await supabaseClient
+                    .from('matches')
+                    .select('id, status, team1_score, team2_score')
+                    .eq('competition_id', competitionId);
+
+                if (matchesError) {
+                    console.error('Error fetching matches:', matchesError);
+                    return { correctCounts: {}, userEmails: {}, totalMatches: 0 };
+                }
+
+                // Count finished matches (N = total matches)
+                const finishedMatches = (matches || []).filter(match => {
+                    const status = (match.status || '').toLowerCase();
+                    return (status === 'finished' || status === 'completed') &&
+                           match.team1_score != null && match.team2_score != null;
+                });
+                const totalMatches = finishedMatches.length;
+
+                if (totalMatches === 0) {
+                    return { correctCounts: {}, userEmails: {}, totalMatches: 0 };
+                }
+
+                // Get all predictions for this competition
+                const { data: predictions, error } = await supabaseClient
+                    .from('predictions')
+                    .select(`
+                        user_id,
+                        user_email,
+                        match_id,
+                        predicted_outcome,
+                        match:match_id (
+                            id,
+                            status,
+                            team1_score,
+                            team2_score
+                        )
+                    `)
+                    .eq('competition_id', competitionId);
+
+                if (error) {
+                    console.error('Error fetching predictions:', error);
+                    return { correctCounts: {}, userEmails: {}, totalMatches: totalMatches };
+                }
+
+                const userCorrectCounts = {};
+                const userEmails = {};
+
+                for (const prediction of predictions || []) {
+                    const userId = prediction.user_id;
+                    const userEmail = prediction.user_email || 'Unknown';
+                    const predictedOutcome = (prediction.predicted_outcome || '').toLowerCase();
+
+                    if (!userId || !predictedOutcome) continue;
+
+                    userEmails[userId] = userEmail;
+
+                    // Initialize counter for this user
+                    if (!userCorrectCounts[userId]) {
+                        userCorrectCounts[userId] = 0;
+                    }
+
+                    const match = prediction.match;
+                    if (!match) continue;
+
+                    const status = (match.status || '').toLowerCase();
+                    if (status !== 'finished' && status !== 'completed') continue;
+
+                    const team1Score = match.team1_score;
+                    const team2Score = match.team2_score;
+
+                    if (team1Score == null || team2Score == null) continue;
+
+                    const actualOutcome = calculateActualOutcome(team1Score, team2Score);
+
+                    if (predictedOutcome === actualOutcome) {
+                        userCorrectCounts[userId]++;
+                    }
+                }
+
+                return { 
+                    correctCounts: userCorrectCounts, 
+                    userEmails: userEmails, 
+                    totalMatches: totalMatches
+                };
+            } catch (e) {
+                console.error('Error calculating correct predictions:', e);
+                return { correctCounts: {}, userEmails: {}, totalMatches: 0 };
+            }
+        }
+
+        async function awardTokensToUser(userId, userEmail, tokenAmount) {
+            if (tokenAmount <= 0) {
+                console.log(`Skipping token award: amount is ${tokenAmount}`);
+                return;
+            }
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('token_payments')
+                    .insert({
+                        user_id: userId,
+                        user_email: userEmail,
+                        token_amount: tokenAmount,
+                        status: 'approved'
+                    })
+                    .select()
+                    .single();
+
+                if (error) {
+                    console.error(`❌ Error awarding tokens to user ${userId}:`, error);
+                    console.error(`   Error details:`, JSON.stringify(error, null, 2));
+                    throw error;
+                }
+
+                console.log(`✅ Awarded ${tokenAmount} tokens to user ${userEmail} (userId: ${userId})`);
+                console.log(`   Record created:`, data);
+            } catch (e) {
+                console.error(`❌ Error awarding tokens to user ${userId}:`, e);
+                throw e;
+            }
+        }
+
+        async function hasPrizesBeenDistributed(competitionId) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('token_payments')
+                    .select('id')
+                    .eq('competition_id', competitionId)
+                    .eq('payment_type', 'prize_winning')
+                    .limit(1);
+
+                if (error) {
+                    console.error('❌ Error checking prize distribution:', error);
+                    return false;
+                }
+
+                return data && data.length > 0;
+            } catch (e) {
+                console.error('❌ Error in hasPrizesBeenDistributed:', e);
+                return false;
+            }
+        }
+
+        async function distributePrizes(competitionId, competitionTitle) {
+            if (!confirm(`Distribute prizes for "${competitionTitle}"?\n\nThis will:\n1. Calculate prediction accuracy for all users\n2. Apply accuracy-based proportional distribution\n3. Exclude users with accuracy below 50%\n4. Award tokens proportionally to eligible winners\n\nContinue?`)) {
+                return;
+            }
+
+            const loadingMsg = document.createElement('div');
+            loadingMsg.className = 'success';
+            loadingMsg.style.position = 'fixed';
+            loadingMsg.style.top = '20px';
+            loadingMsg.style.right = '20px';
+            loadingMsg.style.zIndex = '10000';
+            loadingMsg.style.padding = '20px';
+            loadingMsg.style.background = '#4CAF50';
+            loadingMsg.style.color = 'white';
+            loadingMsg.style.borderRadius = '8px';
+            loadingMsg.style.boxShadow = '0 4px 6px rgba(0,0,0,0.3)';
+            loadingMsg.innerHTML = '🔄 Distributing prizes... Please wait.';
+            document.body.appendChild(loadingMsg);
+
+            try {
+                console.log(`🎯 Starting prize distribution for competition: ${competitionId}`);
+
+                // Check if prizes have already been distributed
+                const alreadyDistributed = await hasPrizesBeenDistributed(competitionId);
+                if (alreadyDistributed) {
+                    if (!confirm('Prizes have already been distributed for this competition. Do you want to distribute again? (This may create duplicate awards)')) {
+                        loadingMsg.remove();
+                        return;
+                    }
+                }
+
+                // Check if all matches are finished
+                const allMatchesFinished = await checkAllMatchesFinished(competitionId);
+                if (!allMatchesFinished) {
+                    loadingMsg.remove();
+                    alert('❌ Cannot distribute prizes: Not all matches are finished yet. Please ensure all matches have status "finished" or "completed" and have scores.');
+                    return;
+                }
+
+                // Get prize pool from competition
+                const { data: competition, error: compError } = await supabaseClient
+                    .from('competitions')
+                    .select('prize_pool')
+                    .eq('id', competitionId)
+                    .single();
+
+                if (compError || !competition) {
+                    loadingMsg.remove();
+                    alert('❌ Cannot distribute prizes: Competition not found.');
+                    return;
+                }
+
+                const totalPrizePool = competition.prize_pool || 0;
+                if (totalPrizePool <= 0) {
+                    loadingMsg.remove();
+                    alert('❌ Cannot distribute prizes: Prize pool is empty or zero.');
+                    return;
+                }
+
+                console.log(`💰 Total prize pool: ${totalPrizePool} tokens`);
+
+                // Calculate correct predictions per user and get total matches
+                const { correctCounts, userEmails, totalMatches } = await calculateUserCorrectPredictions(competitionId);
+                console.log(`👥 Users with predictions:`, Object.keys(correctCounts).length);
+                console.log(`📊 Total matches in competition: ${totalMatches}`);
+                console.log(`📈 Correct counts per user:`, correctCounts);
+                
+                if (Object.keys(correctCounts).length === 0 || totalMatches === 0) {
+                    loadingMsg.remove();
+                    alert('❌ Cannot distribute prizes: No users with correct predictions or no finished matches.');
+                    return;
+                }
+
+                // Accuracy-Based Proportional Distribution
+                const userWeights = {};
+                const userAccuracies = {};
+                let totalWeight = 0;
+
+                // Calculate accuracy and weight for each user
+                for (const [userId, correctCount] of Object.entries(correctCounts)) {
+                    // Accuracy = Correct predictions / Total matches
+                    const accuracy = correctCount / totalMatches;
+                    userAccuracies[userId] = accuracy;
+                    
+                    // Apply minimum accuracy threshold (50%)
+                    if (accuracy >= MIN_ACCURACY_THRESHOLD) {
+                        userWeights[userId] = accuracy;
+                        totalWeight += accuracy;
+                    } else {
+                        console.log(`⚠️ User ${userEmails[userId]} excluded: accuracy ${(accuracy * 100).toFixed(1)}% is below ${(MIN_ACCURACY_THRESHOLD * 100)}% threshold`);
+                    }
+                }
+
+                if (totalWeight === 0) {
+                    loadingMsg.remove();
+                    alert(`❌ Cannot distribute prizes: No users meet the minimum accuracy threshold of ${(MIN_ACCURACY_THRESHOLD * 100)}%.`);
+                    return;
+                }
+
+                console.log(`⚖️ Total weight: ${totalWeight.toFixed(4)}`);
+                console.log(`👥 Eligible users (accuracy >= ${(MIN_ACCURACY_THRESHOLD * 100)}%):`, Object.keys(userWeights).length);
+
+                // Calculate and distribute rewards proportionally
+                let totalDistributed = 0;
+                const distributionResults = [];
+
+                for (const [userId, weight] of Object.entries(userWeights)) {
+                    const userEmail = userEmails[userId] || 'Unknown';
+                    const correctCount = correctCounts[userId];
+                    const accuracy = userAccuracies[userId];
+
+                    // Calculate user's reward: (UserWeight / TotalWeight) × PrizePool
+                    const userReward = (weight / totalWeight) * totalPrizePool;
+                    const roundedReward = Math.round(userReward * 100) / 100; // Round to 2 decimal places
+
+                    if (roundedReward <= 0) {
+                        console.log(`⚠️ Skipping ${userEmail}: reward is ${roundedReward}`);
+                        continue;
+                    }
+
+                    console.log(`💰 ${userEmail}: ${correctCount}/${totalMatches} correct (${(accuracy * 100).toFixed(1)}% accuracy) → ${roundedReward.toFixed(2)} tokens`);
+
+                    await awardTokensToUser(userId, userEmail, Math.round(roundedReward));
+                    totalDistributed += Math.round(roundedReward);
+
+                    distributionResults.push({
+                        userId,
+                        userEmail,
+                        correctCount,
+                        totalMatches,
+                        accuracy,
+                        reward: Math.round(roundedReward)
+                    });
+                }
+
+                console.log('✅ Prize distribution complete!');
+                console.log(`   Total prize pool: ${totalPrizePool} tokens`);
+                console.log(`   Total distributed: ${totalDistributed} tokens`);
+                console.log(`   Distribution method: Accuracy-based proportional`);
+
+                loadingMsg.innerHTML = `
+                    ✅ Prizes distributed successfully!<br>
+                    <strong>Total Prize Pool:</strong> ${totalPrizePool} tokens<br>
+                    <strong>Total Distributed:</strong> ${totalDistributed} tokens<br>
+                    <strong>Eligible Users:</strong> ${Object.keys(userWeights).length} users<br>
+                    <strong>Method:</strong> Accuracy-based proportional distribution<br>
+                    <small>Click to close</small>
+                `;
+                loadingMsg.style.background = '#4CAF50';
+                loadingMsg.style.cursor = 'pointer';
+                loadingMsg.onclick = () => loadingMsg.remove();
+
+                setTimeout(() => {
+                    loadingMsg.remove();
+                }, 10000);
+
+                // Reload competitions to refresh the view
+                await loadCompetitions();
+            } catch (e) {
+                console.error('❌ Error distributing prizes:', e);
+                loadingMsg.innerHTML = `❌ Error: ${e.message || e}`;
+                loadingMsg.style.background = '#f44336';
+                loadingMsg.onclick = () => loadingMsg.remove();
+
+                setTimeout(() => {
+                    loadingMsg.remove();
+                }, 10000);
+            }
+        }
+
+        async function loadCompetitions() {
+            const list = document.getElementById('competitionsList');
+            if (!list) {
+                console.error('❌ competitionsList element not found!');
+                return;
+            }
+
+            // Check if page1 is visible (either active or exists and adminView is visible)
+            const page1 = document.getElementById('page1');
+            const adminView = document.getElementById('adminView');
+            const isAdminViewVisible = adminView && adminView.style.display !== 'none';
+            const isPage1Active = page1 && page1.classList.contains('active');
+
+            // Only skip if we're definitely not on page1 AND admin view is visible
+            // (This prevents loading when we're on page2, payments, or leaderboard, or settings)
+            if (isAdminViewVisible && !isPage1Active && page1) {
+                console.log('⏸️ Page1 is not active, skipping loadCompetitions (currently on different page)');
+                return;
+            }
+
+            list.innerHTML = '<div class="loading">Loading competitions...</div>';
+
+            console.log('🔄 Loading competitions from Supabase...');
+            console.log('🔍 Current user:', currentUser?.email || 'No user');
+
+            const { data, error } = await supabaseClient
+                .from('competitions')
+                .select('id, title, prize_pool, entry_fee, close_date, created_at')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('❌ Error loading competitions:', error);
+                console.error('❌ Error details:', JSON.stringify(error, null, 2));
+                if (error.message?.toLowerCase().includes('permission')) {
+                    list.innerHTML = `<div class="error show">❌ Unauthorized. Ensure this account is listed in the admin_users table.</div>`;
+                } else {
+                    list.innerHTML = `<div class="error show">❌ Error: ${error.message}</div>`;
+                }
+                return;
+            }
+
+            console.log(`✅ Loaded ${data?.length || 0} competitions from database`);
+            console.log('📋 Competitions data:', JSON.stringify(data, null, 2));
+
+            if (!data || data.length === 0) {
+                list.innerHTML = '<div class="loading">No competitions yet. Create one above!</div>';
+                return;
+            }
+
+            const grid = document.createElement('div');
+            grid.className = 'grid';
+            list.innerHTML = '';
+            list.appendChild(grid);
+
+            data.forEach(comp => {
+                const card = document.createElement('div');
+                card.className = 'comp-card';
+
+                const closeDateLabel = comp.close_date
+                    ? new Date(comp.close_date).toLocaleDateString()
+                    : 'Not set';
+
+                card.innerHTML = `
+                    <div class="comp-card-badge">🏆 Active</div>
+                    <h3>${comp.title}</h3>
+                    <div class="comp-stats">
+                        <div class="stat-item">
+                            <div class="stat-label">Prize Pool</div>
+                            <div class="stat-value">${comp.prize_pool} 🪙</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Entry Fee</div>
+                            <div class="stat-value">${comp.entry_fee || 0} 🪙</div>
+                        </div>
+                        <div class="stat-item" style="grid-column: span 2;">
+                            <div class="stat-label">Close Date</div>
+                            <div class="stat-value">${closeDateLabel}</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        <button class="btn btn-primary btn-sm" style="flex: 1;">Manage</button>
+                        <button class="btn btn-api btn-sm" style="flex: 1;">Distribute</button>
+                        <button class="btn btn-danger btn-sm">Delete</button>
+                    </div>
+                `;
+
+                // Add event listeners to buttons
+                const buttons = card.querySelectorAll('button');
+                buttons[0].addEventListener('click', () => showPage2(comp.id, comp.title, comp.prize_pool));
+                buttons[1].addEventListener('click', () => distributePrizes(comp.id, comp.title));
+                buttons[2].addEventListener('click', () => deleteCompetition(comp.id));
+
+                grid.appendChild(card);
+            });
+        }
+
+        // Create Competition
+        document.getElementById('competitionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('createBtn');
+            const errorDiv = document.getElementById('error1');
+            const successDiv = document.getElementById('success1');
+
+            btn.disabled = true;
+            btn.textContent = 'Creating...';
+            errorDiv.classList.remove('show');
+            successDiv.classList.remove('show');
+
+            const closeDateValue = document.getElementById('competitionCloseDate').value;
+            const closeDateIso = closeDateValue
+                ? new Date(`${closeDateValue}T23:59:59`).toISOString()
+                : null;
+
+            const { data, error } = await supabaseClient
+                .from('competitions')
+                .insert({
+                    title: document.getElementById('competitionName').value,
+                    prize_pool: parseInt(document.getElementById('tokenPrize').value, 10),
+                    entry_fee: parseInt(document.getElementById('entryFee').value, 10) || 0,
+                    close_date: closeDateIso
+                })
+                .select()
+                .single();
+
+            if (error) {
+                errorDiv.textContent = `❌ Error: ${error.message}`;
+                errorDiv.classList.add('show');
+                btn.disabled = false;
+                btn.textContent = 'Create Competition';
+                return;
+            }
+
+            successDiv.textContent = '✅ Competition created successfully!';
+            successDiv.classList.add('show');
+            document.getElementById('competitionForm').reset();
+
+            console.log('✅ Competition created:', data);
+            console.log('🔄 Will navigate to match management page in 1 second...');
+
+            // Navigate to match management page after a short delay
+            // Note: We don't reload competitions list here since we're navigating away
+            setTimeout(() => {
+                showPage2(data.id, data.title, data.prize_pool);
+            }, 1000);
+
+            btn.disabled = false;
+            btn.textContent = 'Create Competition';
+        });
+
+        // Load Matches
+        async function loadMatches() {
+            if (!currentCompetitionId) return;
+
+            const matchesList = document.getElementById('matchesList');
+            matchesList.innerHTML = '<div class="loading">Loading matches...</div>';
+
+            const { data, error } = await supabaseClient
+                .from('matches')
+                .select('id, team1, team2, team1_logo, team2_logo, match_datetime, status, team1_score, team2_score')
+                .eq('competition_id', currentCompetitionId)
+                .order('match_datetime', { ascending: true });
+
+            if (error) {
+                matchesList.innerHTML = `<div class="error show">❌ Error: ${error.message}</div>`;
+                return;
+            }
+
+            const matches = data || [];
+            document.getElementById('matchCount').textContent = matches.length;
+
+            if (matches.length === 0) {
+                matchesList.innerHTML = '<div class="loading">No matches yet. Add one above!</div>';
+                return;
+            }
+
+            const grid = document.createElement('div');
+            grid.className = 'grid';
+            matchesList.innerHTML = '';
+            matchesList.appendChild(grid);
+
+            matches.forEach(match => {
+                const date = match.match_datetime ? new Date(match.match_datetime) : new Date();
+                const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+                const [matchDatePart, rest] = localDate.toISOString().split('T');
+                const matchTimePart = rest ? rest.slice(0, 5) : '00:00';
+
+                const card = document.createElement('div');
+                card.className = 'match-card';
+
+                const statusClass = (match.status || 'upcoming').toLowerCase();
+                const scoreDisplay = (match.team1_score != null && match.team2_score != null)
+                    ? `<div class="match-score">${match.team1_score} - ${match.team2_score}</div>`
+                    : '<div class="match-score">vs</div>';
+
+                card.innerHTML = `
+                    <div class="match-teams">
+                        <div class="team">
+                            <img src="${match.team1_logo || 'https://via.placeholder.com/40'}" class="team-logo-small">
+                            <span class="team-name">${match.team1}</span>
+                        </div>
+                        ${scoreDisplay}
+                        <div class="team">
+                            <img src="${match.team2_logo || 'https://via.placeholder.com/40'}" class="team-logo-small">
+                            <span class="team-name">${match.team2}</span>
+                        </div>
+                    </div>
+                    <div class="comp-stats" style="margin-top: 16px;">
+                        <div class="stat-item">
+                            <div class="stat-label">Date</div>
+                            <div class="stat-value" style="font-size: 0.85rem;">${date.toLocaleDateString()}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Time</div>
+                            <div class="stat-value" style="font-size: 0.85rem;">${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                        </div>
+                        <div class="stat-item" style="grid-column: span 2;">
+                            <div class="stat-label">Status</div>
+                            <div class="stat-value" style="text-transform: capitalize;">${match.status || 'upcoming'}</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-top: 16px;">
+                        <button class="btn btn-secondary btn-sm" style="flex: 1;">Edit</button>
+                        <button class="btn btn-secondary btn-sm" style="flex: 1;">Predictions</button>
+                        <button class="btn btn-danger btn-sm">Delete</button>
+                    </div>
+                `;
+
+                // Add event listeners
+                const buttons = card.querySelectorAll('button');
+                buttons[0].addEventListener('click', () => editMatch(
+                    match.id,
+                    match.team1,
+                    match.team2,
+                    match.team1_logo || '',
+                    match.team2_logo || '',
+                    matchDatePart,
+                    matchTimePart,
+                    match.status || 'upcoming',
+                    match.team1_score,
+                    match.team2_score
+                ));
+                buttons[1].addEventListener('click', () => viewPredictions(match.id, `${match.team1} vs ${match.team2}`));
+                buttons[2].addEventListener('click', () => deleteMatch(match.id));
+
+                grid.appendChild(card);
+            });
+        }
+
+        // Add/Update Match
+        document.getElementById('matchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('addMatchBtn');
+            const errorDiv = document.getElementById('error2');
+            const successDiv = document.getElementById('success2');
+
+            btn.disabled = true;
+            btn.textContent = editingMatchId ? 'Updating...' : 'Adding...';
+            errorDiv.classList.remove('show');
+            successDiv.classList.remove('show');
+
+            const date = document.getElementById('matchDate').value;
+            const time = document.getElementById('matchTime').value;
+            const matchDateTime = new Date(`${date}T${time}:00`);
+
+            const team1Logo = document.getElementById('team1Logo').value.trim();
+            const team2Logo = document.getElementById('team2Logo').value.trim();
+
+            const payload = {
+                competition_id: currentCompetitionId,
+                team1: document.getElementById('team1').value,
+                team2: document.getElementById('team2').value,
+                match_datetime: matchDateTime.toISOString(),
+                status: document.getElementById('matchStatus').value || 'upcoming'
+            };
+
+            // Add logos if provided
+            if (team1Logo) {
+                payload.team1_logo = team1Logo;
+            }
+            if (team2Logo) {
+                payload.team2_logo = team2Logo;
+            }
+            
+            // Add scores if provided (only update if both are provided)
+            const team1Score = document.getElementById('team1Score').value.trim();
+            const team2Score = document.getElementById('team2Score').value.trim();
+            if (team1Score && team2Score) {
+                const score1 = parseInt(team1Score, 10);
+                const score2 = parseInt(team2Score, 10);
+                if (!isNaN(score1) && !isNaN(score2)) {
+                    payload.team1_score = score1;
+                    payload.team2_score = score2;
+                }
+            } else if (team1Score || team2Score) {
+                // If only one score is provided, require both
+                errorDiv.textContent = 'Please provide both scores or leave both empty';
+                errorDiv.classList.add('show');
+                btn.disabled = false;
+                btn.textContent = editingMatchId ? 'Update Match' : 'Add Match';
+                return;
+            }
+            // If both are empty, don't include scores in payload (preserves existing scores when editing)
+
+            let response;
+            if (editingMatchId) {
+                response = await supabaseClient
+                    .from('matches')
+                    .update(payload)
+                    .eq('id', editingMatchId)
+                    .select()
+                    .single();
+            } else {
+                response = await supabaseClient
+                    .from('matches')
+                    .insert(payload)
+                    .select()
+                    .single();
+            }
+
+            if (response.error) {
+                errorDiv.textContent = `❌ Error: ${response.error.message}`;
+                errorDiv.classList.add('show');
+                btn.disabled = false;
+                btn.textContent = editingMatchId ? 'Update Match' : 'Add Match';
+                return;
+            }
+
+            successDiv.textContent = `✅ Match ${editingMatchId ? 'updated' : 'added'} successfully!`;
+            successDiv.classList.add('show');
+
+            // Send FCM notification when a NEW match is added
+            if (!editingMatchId) {
+                // Ensure we have the title even if it wasn't set globally
+                const compTitle = currentCompetitionTitle || 
+                                 document.getElementById('competitionTitle').textContent.replace(' - Matches', '') || 
+                                 'New Match';
+                
+                (async () => {
+                    const infoDiv = document.createElement('div');
+                    infoDiv.className = 'toast info show';
+                    infoDiv.style.bottom = '80px';
+                    infoDiv.innerHTML = '🔔 Sending push notifications for new match...';
+                    document.body.appendChild(infoDiv);
+
+                    try {
+                        console.log('🔔 Triggering notification for new match in:', compTitle);
+                        const response = await fetch(`${API_BASE_URL}/api/notify-new-match`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ 
+                                competitionTitle: compTitle,
+                                competitionId: currentCompetitionId,
+                                team1: payload.team1,
+                                team2: payload.team2
+                            })
+                        });
+                        
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                        }
+                        
+                        const result = await response.json();
+                        console.log('🔔 Notification result:', result);
+                        infoDiv.innerHTML = '✅ Push notifications sent successfully!';
+                        infoDiv.className = 'toast success show';
+                    } catch (err) {
+                        console.error('❌ Failed to send notification:', err);
+                        infoDiv.innerHTML = `❌ Notification failed: ${err.message}`;
+                        infoDiv.className = 'toast error show';
+                    } finally {
+                        setTimeout(() => infoDiv.remove(), 5000);
+                    }
+                })();
+            }
+
+            document.getElementById('matchForm').reset();
+            cancelEdit();
+            loadMatches();
+
+            btn.disabled = false;
+            btn.textContent = editingMatchId ? 'Update Match' : 'Add Match';
+        });
+
+        // Edit Match
+        function editMatch(id, team1, team2, team1Logo, team2Logo, date, time, status, team1Score, team2Score) {
+            editingMatchId = id;
+            document.getElementById('matchId').value = id;
+            document.getElementById('team1').value = team1;
+            document.getElementById('team2').value = team2;
+            document.getElementById('team1Logo').value = team1Logo || '';
+            document.getElementById('team2Logo').value = team2Logo || '';
+            document.getElementById('matchDate').value = date;
+            document.getElementById('matchTime').value = time;
+            document.getElementById('matchStatus').value = status || 'upcoming';
+            document.getElementById('team1Score').value = team1Score != null ? team1Score : '';
+            document.getElementById('team2Score').value = team2Score != null ? team2Score : '';
+            document.getElementById('formTitle').textContent = 'Edit Match';
+            document.getElementById('addMatchBtn').textContent = 'Update Match';
+            document.getElementById('cancelEditBtn').style.display = 'block';
+        }
+
+        // Cancel Edit
+        function cancelEdit() {
+            editingMatchId = null;
+            document.getElementById('matchId').value = '';
+            document.getElementById('matchForm').reset();
+            document.getElementById('team1Logo').value = '';
+            document.getElementById('team2Logo').value = '';
+            document.getElementById('team1Score').value = '';
+            document.getElementById('team2Score').value = '';
+            document.getElementById('matchStatus').value = 'upcoming';
+            document.getElementById('formTitle').textContent = 'Add New Match';
+            document.getElementById('addMatchBtn').textContent = 'Add Match';
+            document.getElementById('cancelEditBtn').style.display = 'none';
+        }
+
+        // Delete Match
+        async function deleteMatch(id) {
+            if (!confirm('Are you sure you want to delete this match?')) return;
+
+            const { error } = await supabaseClient
+                .from('matches')
+                .delete()
+                .eq('id', id);
+
+            if (error) {
+                alert('Error: ' + error.message);
+                return;
+            }
+
+            loadMatches();
+        }
+
+        async function loadPayments() {
+            const list = document.getElementById('paymentsList');
+            if (!list) return;
+            list.innerHTML = '<div class="loading">Loading payments...</div>';
+
+            const { data, error } = await supabaseClient
+                .from('token_payments')
+                .select('id, user_id, user_email, token_amount, price, status, receipt_url, created_at')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                const message = error.message?.toLowerCase().includes('permission')
+                    ? '❌ Unauthorized. Ensure this admin account is in admin_users.'
+                    : `❌ Error: ${error.message}`;
+                list.innerHTML = `<div class="error show">${message}</div>`;
+                return;
+            }
+
+            const paymentRows = data || [];
+
+            const { data: predictionRows } = await supabaseClient
+                .from('predictions')
+                .select('user_id');
+
+            const predictionCounts = {};
+            (predictionRows || []).forEach(row => {
+                const uid = row.user_id;
+                if (!uid) return;
+                predictionCounts[uid] = (predictionCounts[uid] || 0) + 1;
+            });
+
+            const INITIAL_TOKENS = 10;
+            const approvedTotals = {};
+            paymentRows.forEach(row => {
+                const uid = row.user_id;
+                if (!uid) return;
+                if (!(uid in approvedTotals)) {
+                    approvedTotals[uid] = INITIAL_TOKENS;
+                }
+                if ((row.status || '').toLowerCase() === 'approved') {
+                    approvedTotals[uid] = (approvedTotals[uid] || 0) + (row.token_amount || 0);
+                }
+            });
+
+            if (paymentRows.length === 0) {
+                list.innerHTML = '<div class="loading">No payment submissions yet.</div>';
+                return;
+            }
+
+            list.innerHTML = '';
+
+            paymentRows.forEach(row => {
+                const created = row.created_at
+                    ? new Date(row.created_at).toLocaleString()
+                    : '—';
+                const status = (row.status || 'pending').toLowerCase();
+                const statusLabel = status.toUpperCase();
+                const balance = approvedTotals[row.user_id] || 0;
+                const predictionCount = predictionCounts[row.user_id] || 0;
+
+                const card = document.createElement('div');
+                card.className = 'payment-card';
+                card.innerHTML = `
+                    <h3 style="margin-bottom: 8px;">${row.user_email || 'Unknown user'}</h3>
+                    <div class="payment-meta">
+                        <span><strong>Tokens</strong> ${row.token_amount}</span>
+                        <span><strong>Price</strong> ${row.price ?? '—'} JD</span>
+                        <span><strong>Status</strong> ${statusLabel}</span>
+                        <span><strong>Submitted</strong> ${created}</span>
+                        <span><strong>Balance</strong> ${balance}</span>
+                        <span><strong>Predictions</strong> ${predictionCount}</span>
+                    </div>
+                    <div style="margin-top: 16px;">
+                        ${row.receipt_url ? `<a href="${row.receipt_url}" target="_blank" class="btn btn-secondary btn-sm" style="text-decoration: none;">📄 View Receipt</a>` : '<span style="color: var(--text-secondary); font-size: 0.9rem;">No receipt provided</span>'}
+                    </div>
+                `;
+
+                if (status === 'pending') {
+                    const actions = document.createElement('div');
+                    actions.className = 'payment-actions';
+
+                    const approveBtn = document.createElement('button');
+                    approveBtn.className = 'btn btn-primary btn-sm';
+                    approveBtn.textContent = '✅ Approve';
+                    approveBtn.addEventListener('click', () => updatePaymentStatus(row.id, 'approved'));
+
+                    const rejectBtn = document.createElement('button');
+                    rejectBtn.className = 'btn btn-danger btn-sm';
+                    rejectBtn.textContent = '❌ Reject';
+                    rejectBtn.addEventListener('click', () => updatePaymentStatus(row.id, 'rejected'));
+
+                    actions.appendChild(approveBtn);
+                    actions.appendChild(rejectBtn);
+                    card.appendChild(actions);
+                }
+
+                list.appendChild(card);
+            });
+        }
+
+        async function updatePaymentStatus(id, status) {
+            const updates = { status };
+            if (status === 'approved') {
+                updates.approved_at = new Date().toISOString();
+                updates.approved_by = currentUser?.email ?? null;
+            }
+
+            const { error } = await supabaseClient
+                .from('token_payments')
+                .update(updates)
+                .eq('id', id);
+
+            if (error) {
+                alert('Failed to update payment: ' + error.message);
+                return;
+            }
+
+            loadPayments();
+        }
+
+        function closePredictionsPanel() {
+            document.getElementById('predictionsPanel').classList.remove('show');
+        }
+
+        function formatOutcome(outcome) {
+            if (!outcome) return '—';
+            switch (outcome) {
+                case 'team1':
+                    return 'Home win';
+                case 'team2':
+                    return 'Away win';
+                case 'draw':
+                    return 'Draw';
+                default:
+                    return outcome.toUpperCase();
+            }
+        }
+
+        async function viewPredictions(matchId, matchLabel) {
+            const panel = document.getElementById('predictionsPanel');
+            const body = document.getElementById('predictionsBody');
+            const title = document.getElementById('predictionsTitle');
+
+            title.textContent = `Predictions for ${matchLabel}`;
+            panel.classList.add('show');
+            body.innerHTML = '<div class="loading">Loading predictions...</div>';
+
+            const { data, error } = await supabaseClient
+                .from('predictions')
+                .select('user_email, predicted_outcome, predicted_score, created_at')
+                .eq('match_id', matchId)
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                const message = error.message?.toLowerCase().includes('permission')
+                    ? '❌ Unauthorized. Add this admin account to admin_users.'
+                    : `❌ Error: ${error.message}`;
+                body.innerHTML = `<div class="error show">${message}</div>`;
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                body.innerHTML = '<div class="loading">No predictions yet.</div>';
+                return;
+            }
+
+            body.innerHTML = '';
+            data.forEach(entry => {
+                const item = document.createElement('div');
+                item.className = 'prediction-item';
+
+                const createdAt = entry.created_at
+                    ? new Date(entry.created_at).toLocaleString()
+                    : '';
+
+                item.innerHTML = `
+                    <p><strong>User:</strong> ${entry.user_email || 'Unknown'}</p>
+                    <p><strong>Prediction:</strong> ${formatOutcome(entry.predicted_outcome)}</p>
+                    <p><small>${createdAt}</small></p>
+                `;
+
+                body.appendChild(item);
+            });
+        }
+
+        async function deleteCompetition(id) {
+            if (!confirm('Deleting a competition will remove all matches. Continue?')) return;
+
+            try {
+                // First, delete from competition_entry_fees (if table exists) to avoid foreign key constraint
+                const { error: entryFeeError } = await supabaseClient
+                    .from('competition_entry_fees')
+                    .delete()
+                    .eq('competition_id', id);
+
+                // Don't fail if competition_entry_fees table doesn't exist or has no rows
+                if (entryFeeError && !entryFeeError.message?.includes('relation') && !entryFeeError.message?.includes('does not exist')) {
+                    console.warn('Warning removing entry fees:', entryFeeError.message);
+                }
+
+                // Delete matches
+                const { error: matchError } = await supabaseClient
+                    .from('matches')
+                    .delete()
+                    .eq('competition_id', id);
+
+                if (matchError) {
+                    alert('Error removing matches: ' + matchError.message);
+                    // Still try to refresh the list to show current state
+                    loadCompetitions();
+                    return;
+                }
+
+                // Delete competition
+                const { error } = await supabaseClient
+                    .from('competitions')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) {
+                    alert('Error deleting competition: ' + error.message);
+                } else {
+                    // Show success message briefly
+                    const successMsg = document.getElementById('success1');
+                    if (successMsg) {
+                        successMsg.textContent = 'Competition deleted successfully!';
+                        successMsg.classList.add('show');
+                        setTimeout(() => successMsg.classList.remove('show'), 3000);
+                    }
+                }
+            } catch (err) {
+                console.error('Unexpected error deleting competition:', err);
+                alert('Unexpected error: ' + err.message);
+            } finally {
+                // Always refresh the list to show current database state
+                showPage1();
+                loadCompetitions();
+            }
+        }
+
+        // API Matches Panel Functions
+        let allApiMatchesByDay = { 0: [], 1: [], 2: [] }; // Store matches for today (0), tomorrow (1), day after (2)
+        let currentDayOffset = 0; // Currently selected day (0 = today)
+
+        async function showApiMatches() {
+            const panel = document.getElementById('apiMatchesPanel');
+            panel.classList.add('show');
+
+            // Reset to today
+            currentDayOffset = 0;
+            updateDayButtons();
+
+            const list = document.getElementById('apiMatchesList');
+            list.innerHTML = '<div class="loading">Loading matches from API...</div>';
+
+            // Load all three days in parallel
+            try {
+                await Promise.all([
+                    fetchApiMatchesForDay(0),
+                    fetchApiMatchesForDay(1),
+                    fetchApiMatchesForDay(2)
+                ]);
+                // Show today's matches by default
+                displayMatchesForDay(0);
+            } catch (error) {
+                list.innerHTML = `<div class="error show">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        function closeApiMatchesPanel() {
+            document.getElementById('apiMatchesPanel').classList.remove('show');
+            document.getElementById('apiMatchesSearch').value = '';
+            // Keep the data cached, don't clear it
+        }
+
+        function selectDay(dayOffset) {
+            currentDayOffset = dayOffset;
+            updateDayButtons();
+            displayMatchesForDay(dayOffset);
+            // Clear search when switching days
+            document.getElementById('apiMatchesSearch').value = '';
+        }
+
+        function updateDayButtons() {
+            const buttons = document.querySelectorAll('.day-btn');
+            buttons.forEach((btn, index) => {
+                if (index === currentDayOffset) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+
+        function displayMatchesForDay(dayOffset) {
+            const matches = allApiMatchesByDay[dayOffset] || [];
+            renderApiMatches(matches);
+        }
+
+        async function fetchApiMatchesForDay(dayOffset) {
+            try {
+                const response = await fetch(`https://flashscore4.p.rapidapi.com/api/flashscore/v2/matches/list?sport_id=1&day=${dayOffset}&timezone=Europe%2FBerlin`, {
+                    method: 'GET',
+                    headers: {
+                        'x-rapidapi-host': 'flashscore4.p.rapidapi.com',
+                        'x-rapidapi-key': '3bf02c3ef0msh0fe0962f125b7f6p15b152jsn6fa98ae46c0d'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                // Flatten all matches from all tournaments
+                const matches = [];
+                
+                // v2 API can return either a List directly or an object with a 'data'/'tournaments' key
+                let tournamentsData = [];
+                if (Array.isArray(data)) {
+                    tournamentsData = data;
+                } else if (data && typeof data === 'object') {
+                    tournamentsData = data.data || data.tournaments || data.matches || [];
+                    // If tournamentsData is still not an array, check if the object itself is a tournament
+                    if (!Array.isArray(tournamentsData) && data.matches) {
+                        tournamentsData = [data];
+                    }
+                }
+
+                if (Array.isArray(tournamentsData)) {
+                    tournamentsData.forEach(tournament => {
+                        const tournamentMatches = tournament.matches || tournament.data || [];
+                        if (Array.isArray(tournamentMatches)) {
+                            tournamentMatches.forEach(match => {
+                                // Filter for upcoming matches only
+                                const stage = (match.stage || '').toLowerCase();
+                                const isFinished = stage.includes('finished') || stage.includes('ft') || stage.includes('after penalties');
+                                const isLive = stage.includes('live') || (stage && !isNaN(parseInt(stage)) && parseInt(stage) > 0);
+                                const isCancelled = stage.includes('cancelled') || stage.includes('postponed');
+
+                                if (!isFinished && !isLive && !isCancelled) {
+                                    const matchDateTime = new Date(match.timestamp * 1000);
+                                    const now = new Date();
+
+                                    // Only include future matches or matches for the selected day
+                                    if (matchDateTime > now || dayOffset > 0) {
+                                        matches.push({
+                                            ...match,
+                                            tournamentName: tournament.name || tournament.tournament_name || tournament.tournament || '',
+                                            tournamentCountry: tournament.country_name || tournament.country || '',
+                                            matchDateTime: matchDateTime
+                                        });
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }
+
+                // Sort by date (earliest first)
+                matches.sort((a, b) => a.matchDateTime - b.matchDateTime);
+
+                // Store matches for this day
+                allApiMatchesByDay[dayOffset] = matches;
+
+                // If this is the currently selected day, update the display
+                if (dayOffset === currentDayOffset) {
+                    displayMatchesForDay(dayOffset);
+                }
+            } catch (error) {
+                console.error(`Error fetching API matches for day ${dayOffset}:`, error);
+                allApiMatchesByDay[dayOffset] = [];
+                // Only show error if it's the currently selected day
+                if (dayOffset === currentDayOffset) {
+                    const list = document.getElementById('apiMatchesList');
+                    list.innerHTML = `<div class="error show">❌ Error fetching matches: ${error.message}</div>`;
+                }
+            }
+        }
+
+        function renderApiMatches(matches) {
+            const list = document.getElementById('apiMatchesList');
+
+            if (matches.length === 0) {
+                const dayNames = ['Today', 'Tomorrow', 'Day After Tomorrow'];
+                list.innerHTML = `<div class="loading">No matches found for ${dayNames[currentDayOffset]}.</div>`;
+                return;
+            }
+
+            list.innerHTML = '';
+
+            matches.forEach(match => {
+                const homeTeam = match.home_team?.name || 'Unknown';
+                const awayTeam = match.away_team?.name || 'Unknown';
+                const homeLogo = match.home_team?.image_path || match.home_team?.smaill_image_path || '';
+                const awayLogo = match.away_team?.image_path || match.away_team?.smaill_image_path || '';
+                const tournament = match.tournamentName || match.tournamentCountry || 'Unknown Tournament';
+
+                const dateStr = match.matchDateTime.toLocaleDateString('en-US', {
+                    weekday: 'short',
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+                const timeStr = match.matchDateTime.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                const matchItem = document.createElement('div');
+                matchItem.className = 'api-match-item';
+                matchItem.innerHTML = `
+                    <div class="api-match-teams">
+                        <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
+                            ${homeLogo ? `<img src="${homeLogo}" style="width: 24px; height: 24px; object-fit: contain;">` : ''}
+                            <span>${homeTeam}</span>
+                        </div>
+                        <span style="margin: 0 10px;">vs</span>
+                        <div style="display: flex; align-items: center; gap: 8px; flex: 1; justify-content: flex-end;">
+                            <span>${awayTeam}</span>
+                            ${awayLogo ? `<img src="${awayLogo}" style="width: 24px; height: 24px; object-fit: contain;">` : ''}
+                        </div>
+                    </div>
+                    <div class="api-match-info">
+                        <span>📅 ${dateStr}</span>
+                        <span>🕐 ${timeStr}</span>
+                    </div>
+                    <div class="api-match-tournament">🏆 ${tournament}</div>
+                `;
+
+                matchItem.addEventListener('click', () => selectApiMatch(match));
+
+                list.appendChild(matchItem);
+            });
+        }
+
+        function selectApiMatch(match) {
+            const homeTeam = match.home_team?.name || '';
+            const awayTeam = match.away_team?.name || '';
+            const homeTeamLogo = match.home_team?.image_path || match.home_team?.smaill_image_path || '';
+            const awayTeamLogo = match.away_team?.image_path || match.away_team?.smaill_image_path || '';
+            const matchDateTime = match.matchDateTime;
+
+            // Format date for input (YYYY-MM-DD)
+            const dateStr = matchDateTime.toISOString().split('T')[0];
+            // Format time for input (HH:MM)
+            const hours = matchDateTime.getHours().toString().padStart(2, '0');
+            const minutes = matchDateTime.getMinutes().toString().padStart(2, '0');
+            const timeStr = `${hours}:${minutes}`;
+
+            // Auto-fill the form
+            document.getElementById('team1').value = homeTeam;
+            document.getElementById('team2').value = awayTeam;
+            document.getElementById('team1Logo').value = homeTeamLogo || '';
+            document.getElementById('team2Logo').value = awayTeamLogo || '';
+            document.getElementById('matchDate').value = dateStr;
+            document.getElementById('matchTime').value = timeStr;
+
+            // Close the panel
+            closeApiMatchesPanel();
+
+            // Show success message
+            const successDiv = document.getElementById('success2');
+            successDiv.textContent = '✅ Match selected from API and form filled!';
+            successDiv.classList.add('show');
+            setTimeout(() => {
+                successDiv.classList.remove('show');
+            }, 3000);
+        }
+
+        async function checkServerStatus() {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            if (!dot || !text) return;
+
+            try {
+                // Using the dynamic API_BASE_URL
+                const response = await fetch(`${API_BASE_URL}/health`, { method: 'GET' });
+                if (response.ok) {
+                    dot.className = 'status-dot online';
+                    text.textContent = `Server Online (${API_BASE_URL.includes('localhost') ? 'Local' : 'Live'})`;
+                } else {
+                    throw new Error();
+                }
+            } catch (err) {
+                dot.className = 'status-dot offline';
+                text.textContent = 'Server Offline';
+            }
+        }
+
+        function filterApiMatches() {
+            const searchQuery = document.getElementById('apiMatchesSearch').value.toLowerCase().trim();
+            const matches = allApiMatchesByDay[currentDayOffset] || [];
+
+            if (!searchQuery) {
+                renderApiMatches(matches);
+                return;
+            }
+
+            const filtered = matches.filter(match => {
+                const homeTeam = (match.home_team?.name || '').toLowerCase();
+                const awayTeam = (match.away_team?.name || '').toLowerCase();
+                const tournament = ((match.tournamentName || '') + ' ' + (match.tournamentCountry || '')).toLowerCase();
+
+                return homeTeam.includes(searchQuery) ||
+                    awayTeam.includes(searchQuery) ||
+                    tournament.includes(searchQuery);
+            });
+
+            renderApiMatches(filtered);
+        }
+    </script>
+</body>
+
+</html>
+</html>

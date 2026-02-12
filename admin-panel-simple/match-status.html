@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Match Status Monitor - Tactics</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .header {
+            background: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 15px 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .search-box {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 300px;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #d32f2f;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: #d32f2f;
+        }
+
+        .tab.active {
+            color: #d32f2f;
+            border-bottom-color: #d32f2f;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #d32f2f;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #b71c1c;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .league-item {
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 2px;
+        }
+
+        .league-header {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .league-header:hover {
+            background: #f9f9f9;
+        }
+
+        .league-flag {
+            width: 24px;
+            height: 16px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .league-name {
+            flex: 1;
+            font-weight: 600;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .league-pin {
+            margin-right: 10px;
+            color: #999;
+            font-size: 14px;
+        }
+
+        .league-count {
+            color: #666;
+            font-size: 13px;
+            margin-right: 10px;
+        }
+
+        .matches-container {
+            display: block;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .match-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid #f5f5f5;
+            transition: background 0.2s;
+        }
+
+        .match-item:hover {
+            background: #f9f9f9;
+        }
+
+        .match-item:last-child {
+            border-bottom: none;
+        }
+
+        .match-time {
+            min-width: 50px;
+            font-size: 13px;
+            color: #d32f2f;
+            font-weight: 600;
+            margin-right: 15px;
+        }
+
+        .match-teams {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .team {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .team-logo {
+            width: 24px;
+            height: 24px;
+            border-radius: 2px;
+        }
+
+        .team-name {
+            font-size: 14px;
+            color: #333;
+        }
+
+        .team-score {
+            font-weight: 600;
+            font-size: 14px;
+            min-width: 20px;
+            text-align: right;
+        }
+
+        .match-vs {
+            margin: 0 8px;
+            color: #999;
+            font-size: 12px;
+        }
+
+        .match-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .live-badge {
+            background: #d32f2f;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .selected-panel {
+            background: #e3f2fd;
+            border: 2px solid #2196f3;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .selected-panel.show {
+            display: block;
+        }
+
+        .selected-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .selected-header h3 {
+            font-size: 16px;
+            color: #1976d2;
+        }
+
+        .selected-count {
+            background: #2196f3;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .status-indicator.connected {
+            background: #28a745;
+        }
+
+        .status-indicator.loading {
+            background: #ffc107;
+        }
+
+        .status-indicator.error {
+            background: #dc3545;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div class="header-top">
+            <h1>⚽ Match Status Monitor</h1>
+            <div class="header-controls">
+                <input type="text" id="searchInput" class="search-box" placeholder="🔍 Search by team or league...">
+                <button class="btn-primary" onclick="refreshMatches()" id="refreshBtn">🔄 Refresh</button>
+                <button class="btn-secondary" onclick="toggleAutoRefresh()" id="autoRefreshBtn">▶️ Auto-Refresh</button>
+                <span id="apiStatus"><span class="status-indicator" id="statusDot"></span><span id="statusText">Ready</span></span>
+            </div>
+        </div>
+        <div class="tabs">
+            <button class="tab active" id="tabLive" onclick="switchTab('live')">LIVE</button>
+            <button class="tab" id="tabUpcoming" onclick="switchTab('upcoming')">UPCOMING</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="selected-panel" id="selectedPanel">
+            <div class="selected-header">
+                <h3>Selected Matches <span class="selected-count" id="selectedCount">0</span></h3>
+                <div>
+                    <button class="btn-success" onclick="showInApp()">📱 Show in App</button>
+                    <button class="btn-secondary" onclick="clearSelection()" style="margin-left: 8px;">Clear</button>
+                </div>
+            </div>
+            <div id="selectedList"></div>
+        </div>
+
+        <div id="matchesList"></div>
+    </div>
+
+    <script>
+        const LIVE_API_URL = 'https://flashscore4.p.rapidapi.com/api/flashscore/v2/matches/live?sport_id=1&timezone=Europe%2FBerlin';
+        const UPCOMING_API_URL = 'https://flashscore4.p.rapidapi.com/api/flashscore/v2/matches/list?sport_id=1&day=0&timezone=Europe%2FBerlin';
+        const API_KEY = '3bf02c3ef0msh0fe0962f125b7f6p15b152jsn6fa98ae46c0d';
+
+        let autoRefreshInterval = null;
+        let currentTab = 'live';
+        let liveMatchesData = [];
+        let upcomingMatchesData = [];
+        let selectedMatches = new Set();
+        let allMatchesData = {}; // Store all matches by ID for reference
+
+        const allowedLeagues = [
+            'Premier League', 'La Liga', 'Bundesliga', 'Serie A', 'Ligue 1',
+            'Saudi Pro League', 'Qatari Stars League', 'Qatar Stars League',
+            'Egyptian Premier League', 'UAE Pro League', 'Jordanian Pro League',
+            'Jordan Pro League', 'Iraq Stars League', 'UEFA Champions League',
+            'UEFA Europa League', 'UEFA Europa Conference League',
+            'Europa Leagues Leagues Phase', 'Conference Leagues Leagues Phase',
+            'AFC Champions League Elite', 'AFC Champions League 2', 'CAF Champions League'
+        ];
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.getElementById('tabLive').classList.toggle('active', tab === 'live');
+            document.getElementById('tabUpcoming').classList.toggle('active', tab === 'upcoming');
+            document.getElementById('searchInput').value = '';
+            renderMatches();
+        }
+
+        function toggleAutoRefresh() {
+            if (autoRefreshInterval) {
+                stopAutoRefresh();
+            } else {
+                startAutoRefresh();
+            }
+        }
+
+        function startAutoRefresh() {
+            autoRefreshInterval = setInterval(() => refreshMatches(false), 30000);
+            document.getElementById('autoRefreshBtn').textContent = '⏸️ Auto-Refresh';
+            document.getElementById('autoRefreshBtn').classList.remove('btn-secondary');
+            document.getElementById('autoRefreshBtn').classList.add('btn-primary');
+        }
+
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+            }
+            document.getElementById('autoRefreshBtn').textContent = '▶️ Auto-Refresh';
+            document.getElementById('autoRefreshBtn').classList.remove('btn-primary');
+            document.getElementById('autoRefreshBtn').classList.add('btn-secondary');
+        }
+
+        function updateStatus(status, text) {
+            const dot = document.getElementById('statusDot');
+            const textEl = document.getElementById('statusText');
+            dot.className = 'status-indicator ' + status;
+            textEl.textContent = text;
+        }
+
+        async function refreshMatches(showLoading = true) {
+            const refreshBtn = document.getElementById('refreshBtn');
+            refreshBtn.disabled = true;
+            updateStatus('loading', 'Loading...');
+
+            try {
+                const [liveResponse, upcomingResponse] = await Promise.all([
+                    fetch(LIVE_API_URL, {
+                        headers: { 'x-rapidapi-host': 'flashscore4.p.rapidapi.com', 'x-rapidapi-key': API_KEY }
+                    }),
+                    fetch(UPCOMING_API_URL, {
+                        headers: { 'x-rapidapi-host': 'flashscore4.p.rapidapi.com', 'x-rapidapi-key': API_KEY }
+                    })
+                ]);
+
+                if (!liveResponse.ok || !upcomingResponse.ok) {
+                    throw new Error('API request failed');
+                }
+
+                const [liveData, upcomingData] = await Promise.all([liveResponse.json(), upcomingResponse.json()]);
+                
+                liveMatchesData = parseAndFilterMatches(liveData, true);
+                upcomingMatchesData = parseAndFilterMatches(upcomingData, false);
+
+                updateStatus('connected', 'Connected');
+                renderMatches();
+                refreshBtn.disabled = false;
+            } catch (error) {
+                console.error('Error:', error);
+                updateStatus('error', 'Error');
+                document.getElementById('matchesList').innerHTML = 
+                    '<div class="empty-state"><div class="empty-state-icon">⚠️</div><h3>Error loading matches</h3><p>Check API quota or network connection</p></div>';
+                refreshBtn.disabled = false;
+            }
+        }
+
+        function parseAndFilterMatches(data, isLive) {
+            let tournaments = [];
+            
+            if (Array.isArray(data)) {
+                tournaments = data;
+            } else if (data.data && Array.isArray(data.data)) {
+                tournaments = data.data;
+            } else if (data.tournaments && Array.isArray(data.tournaments)) {
+                tournaments = data.tournaments;
+            } else if (data.matches && Array.isArray(data.matches)) {
+                const tournamentMap = new Map();
+                data.matches.forEach(match => {
+                    const tournamentId = match.tournament_id || match.tournamentId || 'unknown';
+                    if (!tournamentMap.has(tournamentId)) {
+                        tournamentMap.set(tournamentId, {
+                            name: match.tournament_name || match.tournamentName || 'Unknown',
+                            country_name: match.tournament_country || match.tournamentCountry || '',
+                            tournament_url: match.tournament_url || '',
+                            image_path: match.tournament_image || '',
+                            matches: []
+                        });
+                    }
+                    tournamentMap.get(tournamentId).matches.push(match);
+                });
+                tournaments = Array.from(tournamentMap.values());
+            }
+
+            const filtered = tournaments.filter(t => {
+                const name = (t.name || '').toLowerCase();
+                return allowedLeagues.some(league => {
+                    const leagueLower = league.toLowerCase();
+                    if (leagueLower === 'premier league') {
+                        return name.includes('premier league') && (t.country_name || '').toLowerCase().includes('england');
+                    }
+                    if (leagueLower === 'la liga') {
+                        return (name.includes('laliga') || name.includes('la liga')) && (t.country_name || '').toLowerCase().includes('spain');
+                    }
+                    if (leagueLower === 'serie a') {
+                        return name.includes('serie a') && (t.country_name || '').toLowerCase().includes('italy');
+                    }
+                    if (leagueLower === 'ligue 1') {
+                        return name.includes('ligue 1') && (t.country_name || '').toLowerCase().includes('france');
+                    }
+                    if (leagueLower === 'bundesliga') {
+                        return name.includes('bundesliga') && (t.country_name || '').toLowerCase().includes('germany');
+                    }
+                    return name.includes(leagueLower);
+                });
+            });
+
+            return filtered.map(t => {
+                const processedMatches = (t.matches || []).map(m => {
+                    const matchId = m.match_id || m.id || `${m.home_team?.name || ''}_${m.away_team?.name || ''}_${m.timestamp}`;
+                    const match = {
+                        id: matchId,
+                        match_id: m.match_id || m.id,
+                        timestamp: m.timestamp || m.match_timestamp,
+                        stage: m.stage || m.match_status || '',
+                        home_team: {
+                            team_id: m.home_team?.team_id || m.homeTeam?.id || '',
+                            name: m.home_team?.name || m.homeTeam?.name || m.home_team_name || 'Unknown',
+                            short_name: m.home_team?.short_name || m.homeTeam?.short_name || '',
+                            image_path: m.home_team?.image_path || m.home_team?.smaill_image_path || m.homeTeam?.image_path || m.homeTeam?.smaill_image_path || '',
+                            red_cards: m.home_team?.red_cards || 0,
+                            score: m.home_team?.score !== null && m.home_team?.score !== undefined ? m.home_team.score : (m.home_score !== null && m.home_score !== undefined ? m.home_score : (m.homeScore !== null && m.homeScore !== undefined ? m.homeScore : 0)),
+                            score_after: m.home_team?.score_after || null
+                        },
+                        away_team: {
+                            team_id: m.away_team?.team_id || m.awayTeam?.id || '',
+                            name: m.away_team?.name || m.awayTeam?.name || m.away_team_name || 'Unknown',
+                            short_name: m.away_team?.short_name || m.awayTeam?.short_name || '',
+                            image_path: m.away_team?.image_path || m.away_team?.smaill_image_path || m.awayTeam?.image_path || m.awayTeam?.smaill_image_path || '',
+                            red_cards: m.away_team?.red_cards || 0,
+                            score: m.away_team?.score !== null && m.away_team?.score !== undefined ? m.away_team.score : (m.away_score !== null && m.away_score !== undefined ? m.away_score : (m.awayScore !== null && m.awayScore !== undefined ? m.awayScore : 0)),
+                            score_after: m.away_team?.score_after || null
+                        },
+                        odds: m.odds || {}
+                    };
+                    allMatchesData[matchId] = { ...match, tournament: t };
+                    return match;
+                }).filter(m => {
+                    if (isLive) {
+                        const stage = (m.stage || '').toLowerCase();
+                        const matchDate = new Date(m.timestamp * 1000);
+                        const now = new Date();
+                        const timeDiff = (now - matchDate) / 1000 / 60; // minutes
+                        
+                        // Check if finished first
+                        const isFinished = stage.includes('finished') ||
+                                          stage.includes('ft') ||
+                                          stage.includes('full-time') ||
+                                          stage.includes('full time') ||
+                                          stage.includes('after penalties') ||
+                                          (m.stage && m.stage.includes('90+') && timeDiff >= 100) ||
+                                          (parseInt(m.stage) > 120) ||
+                                          (parseInt(m.stage) >= 90 && timeDiff >= 120);
+                        
+                        if (isFinished) {
+                            return false; // Exclude finished matches from live tab
+                        }
+                        
+                        // Check if stage is numeric (minute value)
+                        const minute = parseInt(m.stage);
+                        if (!isNaN(minute) && minute > 0 && minute <= 120) {
+                            // Additional check: if match started too long ago, it's finished
+                            if (minute >= 90 && timeDiff >= 100) {
+                                return false; // 90+ matches that started 100+ min ago are finished
+                            }
+                            return true; // It's a live match with minute
+                        }
+                        // Check for live indicators
+                        return stage.includes('live') || 
+                               stage.includes('half time') || 
+                               stage.includes('ht') ||
+                               stage.includes('1st half') ||
+                               stage.includes('2nd half') ||
+                               stage.includes('extra time');
+                    } else {
+                        // For upcoming matches, only show matches from tomorrow onwards
+                        const stage = (m.stage || '').toLowerCase();
+                        // Exclude finished or live matches
+                        if (stage.includes('finished') || 
+                            stage.includes('ft') || 
+                            stage.includes('after penalties') ||
+                            stage.includes('live')) {
+                            return false;
+                        }
+                        // Check if it's a numeric stage (likely finished if > 120)
+                        const minute = parseInt(m.stage);
+                        if (!isNaN(minute) && minute > 120) {
+                            return false; // Match is finished
+                        }
+                        const matchDate = new Date(m.timestamp * 1000);
+                        const now = new Date();
+                        
+                        // Get today's date at 00:00:00 (start of today in local time)
+                        const todayStart = new Date(now);
+                        todayStart.setHours(0, 0, 0, 0);
+                        
+                        // Get tomorrow's date at 00:00:00 (start of tomorrow in local time)
+                        const tomorrow = new Date(todayStart);
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        
+                        // Get match date at 00:00:00 (start of match day in local time)
+                        const matchDayStart = new Date(matchDate);
+                        matchDayStart.setHours(0, 0, 0, 0);
+                        
+                        // Only include matches scheduled for tomorrow or later (compare by day, not exact time)
+                        const isTomorrowOrLater = matchDayStart.getTime() >= tomorrow.getTime();
+                        
+                        // Debug: Log filtered matches
+                        if (isTomorrowOrLater && m.home_team && m.away_team) {
+                            console.log(`✅ Including tomorrow's match: ${m.home_team.name} vs ${m.away_team.name} on ${matchDayStart.toLocaleDateString()}`);
+                        }
+                        
+                        return isTomorrowOrLater;
+                    }
+                });
+
+                return {
+                    id: t.id || t.name,
+                    name: t.name,
+                    country_name: t.country_name || t.countryName || '',
+                    tournament_url: t.tournament_url || '',
+                    image_path: t.image_path || '',
+                    matches: processedMatches
+                };
+            }).filter(t => t.matches.length > 0)
+              .sort((a, b) => {
+                  if (a.country_name !== b.country_name) {
+                      return a.country_name.localeCompare(b.country_name);
+                  }
+                  return a.name.localeCompare(b.name);
+              });
+        }
+
+        function renderMatches() {
+            const container = document.getElementById('matchesList');
+            const matchesData = currentTab === 'live' ? liveMatchesData : upcomingMatchesData;
+            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+
+            if (!matchesData || matchesData.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📅</div><h3>No matches found</h3><p>This is normal when no matches are available from your selected leagues</p></div>';
+                return;
+            }
+
+            let html = '';
+            matchesData.forEach(tournament => {
+                const filteredMatches = tournament.matches.filter(m => {
+                    if (!searchQuery) return true;
+                    const query = searchQuery;
+                    return m.home_team.name.toLowerCase().includes(query) ||
+                           m.away_team.name.toLowerCase().includes(query) ||
+                           tournament.name.toLowerCase().includes(query) ||
+                           tournament.country_name.toLowerCase().includes(query);
+                });
+
+                if (filteredMatches.length === 0) return;
+
+                html += `<div class="league-item">
+                    <div class="league-header">
+                        <span class="league-pin">📍</span>
+                        <span class="league-name">${tournament.country_name}: ${tournament.name}</span>
+                        <span class="league-count">${filteredMatches.length} match${filteredMatches.length !== 1 ? 'es' : ''}</span>
+                    </div>
+                    <div class="matches-container" id="league-${tournament.id}">`;
+
+                filteredMatches.forEach(match => {
+                    const isSelected = selectedMatches.has(match.id);
+                    let timeDisplay = '';
+                    
+                    // Check if match is finished
+                    const stage = match.stage || '';
+                    const stageLower = stage.toLowerCase();
+                    const matchDate = new Date(match.timestamp * 1000);
+                    const now = new Date();
+                    const timeDiff = (now - matchDate) / 1000 / 60; // minutes
+                    
+                    // Check if finished
+                    const isFinished = stageLower.includes('finished') ||
+                                      stageLower.includes('ft') ||
+                                      stageLower.includes('full-time') ||
+                                      stageLower.includes('full time') ||
+                                      stageLower.includes('after penalties') ||
+                                      (stage.includes('90+') && timeDiff >= 100) || // 90+ matches that started 100+ min ago are finished
+                                      (parseInt(stage) > 120) || // Minutes > 120 means finished
+                                      (parseInt(stage) >= 90 && timeDiff >= 120); // 90+ minutes matches that started 2+ hours ago
+                    
+                    if (currentTab === 'live') {
+                        if (isFinished) {
+                            timeDisplay = 'FT';
+                        } else if (stageLower.includes('half time') || stageLower === 'ht') {
+                            timeDisplay = 'HT';
+                        } else if (stageLower.includes('1st half') || stageLower.includes('first half')) {
+                            timeDisplay = '1H';
+                        } else if (stageLower.includes('2nd half') || stageLower.includes('second half')) {
+                            timeDisplay = '2H';
+                        } else if (stageLower.includes('extra time')) {
+                            timeDisplay = 'ET';
+                        } else {
+                            // Check if stage is numeric
+                            const minute = parseInt(stage);
+                            if (!isNaN(minute) && minute > 0) {
+                                if (minute >= 90 && stage.includes('+')) {
+                                    timeDisplay = '90+' + (minute > 90 ? (minute - 90) : '');
+                                } else if (minute > 120) {
+                                    timeDisplay = 'FT';
+                                } else {
+                                    timeDisplay = minute + "'";
+                                }
+                            } else {
+                                timeDisplay = 'LIVE';
+                            }
+                        }
+                    } else {
+                        timeDisplay = matchDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                    }
+
+                    const showLiveBadge = currentTab === 'live' && !isFinished;
+                    html += `<div class="match-item ${isSelected ? 'selected' : ''}" onclick="toggleSelection('${match.id}')">
+                        <div class="match-time">${showLiveBadge ? '<span class="live-badge">LIVE</span>' : ''}${timeDisplay}</div>
+                        <div class="match-teams">
+                            <div class="team">
+                                ${match.home_team.image_path ? `<img src="${match.home_team.image_path}" class="team-logo" onerror="this.style.display='none'">` : ''}
+                                <span class="team-name">${match.home_team.name}</span>
+                                ${currentTab === 'live' ? `<span class="team-score">${match.home_team.score !== null && match.home_team.score !== undefined ? match.home_team.score : 0}</span>` : ''}
+                            </div>
+                            <span class="match-vs">-</span>
+                            <div class="team">
+                                ${currentTab === 'live' ? `<span class="team-score">${match.away_team.score !== null && match.away_team.score !== undefined ? match.away_team.score : 0}</span>` : ''}
+                                ${match.away_team.image_path ? `<img src="${match.away_team.image_path}" class="team-logo" onerror="this.style.display='none'">` : ''}
+                                <span class="team-name">${match.away_team.name}</span>
+                            </div>
+                        </div>
+                        <div class="match-actions">
+                            ${isSelected ? '<span style="color: #28a745; font-weight: 600;">✓ Selected</span>' : ''}
+                        </div>
+                    </div>`;
+                });
+
+                html += `</div></div>`;
+            });
+
+            container.innerHTML = html || '<div class="empty-state"><div class="empty-state-icon">🔍</div><h3>No matches found</h3><p>Try adjusting your search</p></div>';
+            updateSelectedPanel();
+        }
+
+        function toggleSelection(matchId) {
+            if (selectedMatches.has(matchId)) {
+                selectedMatches.delete(matchId);
+            } else {
+                selectedMatches.add(matchId);
+            }
+            renderMatches();
+            updateSelectedPanel();
+        }
+
+        function clearSelection() {
+            selectedMatches.clear();
+            renderMatches();
+            updateSelectedPanel();
+        }
+
+        function updateSelectedPanel() {
+            const panel = document.getElementById('selectedPanel');
+            const count = document.getElementById('selectedCount');
+            const list = document.getElementById('selectedList');
+
+            count.textContent = selectedMatches.size;
+            if (selectedMatches.size === 0) {
+                panel.classList.remove('show');
+                return;
+            }
+
+            panel.classList.add('show');
+            list.innerHTML = '';
+            selectedMatches.forEach(matchId => {
+                const matchData = allMatchesData[matchId];
+                if (matchData) {
+                    const item = document.createElement('div');
+                    item.className = 'match-item';
+                    item.innerHTML = `
+                        <div class="match-teams">
+                            <span>${matchData.home_team.name} vs ${matchData.away_team.name}</span>
+                            <span style="color: #666; margin-left: 10px;">(${matchData.tournament.name})</span>
+                        </div>
+                        <button class="btn-secondary" onclick="toggleSelection('${matchId}')" style="padding: 4px 8px; font-size: 12px;">Remove</button>
+                    `;
+                    list.appendChild(item);
+                }
+            });
+        }
+
+        function showInApp() {
+            if (selectedMatches.size === 0) {
+                alert('Please select matches first');
+                return;
+            }
+
+            const selectedMatchesData = Array.from(selectedMatches).map(id => allMatchesData[id]).filter(m => m);
+            
+            // Group by tournament
+            const tournamentMap = new Map();
+            selectedMatchesData.forEach(matchData => {
+                const tournament = matchData.tournament;
+                const tournamentId = tournament.id || tournament.name;
+                
+                if (!tournamentMap.has(tournamentId)) {
+                    tournamentMap.set(tournamentId, {
+                        name: tournament.name,
+                        country_name: tournament.country_name,
+                        tournament_url: tournament.tournament_url || '',
+                        image_path: tournament.image_path || '',
+                        matches: []
+                    });
+                }
+
+                // Convert match back to API format (exact structure from FlashScore API)
+                    // Preserve exact structure from API, handling null scores
+                    const apiMatch = {
+                        match_id: matchData.match_id || matchData.id,
+                        timestamp: matchData.timestamp,
+                        stage: matchData.stage || '',
+                        home_team: {
+                            team_id: matchData.home_team.team_id || '',
+                            name: matchData.home_team.name || 'Unknown',
+                            short_name: matchData.home_team.short_name || '',
+                            image_path: matchData.home_team.image_path || '',
+                            red_cards: matchData.home_team.red_cards || 0,
+                            score: matchData.home_team.score !== null && matchData.home_team.score !== undefined ? matchData.home_team.score : null,
+                            score_after: matchData.home_team.score_after || null
+                        },
+                        away_team: {
+                            team_id: matchData.away_team.team_id || '',
+                            name: matchData.away_team.name || 'Unknown',
+                            short_name: matchData.away_team.short_name || '',
+                            image_path: matchData.away_team.image_path || '',
+                            red_cards: matchData.away_team.red_cards || 0,
+                            score: matchData.away_team.score !== null && matchData.away_team.score !== undefined ? matchData.away_team.score : null,
+                            score_after: matchData.away_team.score_after || null
+                        },
+                        odds: matchData.odds || {}
+                    };
+                tournamentMap.get(tournamentId).matches.push(apiMatch);
+            });
+
+            const tournamentsArray = Array.from(tournamentMap.values());
+            // Use compact JSON (no spaces) to match the original format
+            const jsonData = JSON.stringify(tournamentsArray);
+
+            // Determine filename based on tab
+            const filename = currentTab === 'live' 
+                ? 'tactic live match.json' 
+                : 'matches of the day.json';
+            const filepath = currentTab === 'live'
+                ? 'files/tactic live match.json'
+                : 'football json/matches of the day.json';
+
+            // Create download link
+            const blob = new Blob([jsonData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            alert(`✅ JSON file "${filename}" downloaded!\n\n📁 Please save it to:\n"${filepath}"\n\n🔄 The app will use this file on next refresh.\n\n💡 Tip: Close and reopen the app to see the changes immediately.`);
+        }
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', () => {
+            renderMatches();
+        });
+
+        // Initial load
+        window.addEventListener('load', () => {
+            refreshMatches();
+        });
+
+        window.addEventListener('beforeunload', () => {
+            stopAutoRefresh();
+        });
+    </script>
+</body>
+
+</html>
