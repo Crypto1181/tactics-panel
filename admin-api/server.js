@@ -251,29 +251,29 @@ app.post('/api/notify-new-match', checkFirebase, async (req, res) => {
   try {
     const { competitionTitle, competitionId, team1, team2 } = req.body;
     
-    if (!competitionTitle) {
-      return res.status(400).json({ error: 'Missing competition title' });
+    if (!competitionTitle || !team1 || !team2) {
+      return res.status(400).json({ error: 'Missing match details or competition title' });
     }
 
     const message = {
       notification: {
-        title: 'New Competition Available! 🏆',
-        body: `Join ${competitionTitle} now. Tap for more details.`,
+        title: 'New Match Added! ⚽',
+        body: `${team1} vs ${team2} in ${competitionTitle}`,
       },
       data: {
         competitionId: String(competitionId || ''),
-        type: 'new_competition',
+        type: 'new_match',
         click_action: 'FLUTTER_NOTIFICATION_CLICK'
       },
       topic: 'all_users'
     };
 
     const response = await admin.messaging().send(message);
-    console.log('✅ Successfully sent FCM message for competition:', response);
+    console.log('✅ Successfully sent FCM message for new match:', response);
     
     res.json({ success: true, messageId: response });
   } catch (error) {
-    console.error('❌ Error sending FCM message for competition:', error);
+    console.error('❌ Error sending FCM message for match:', error);
     res.status(500).json({ error: error.message });
   }
 });
